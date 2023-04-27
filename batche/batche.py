@@ -1,7 +1,7 @@
 import inspect
-from functools import wraps
-from typing import Callable, List, Optional, TypeVar, Any, Dict
 from collections import OrderedDict
+from functools import wraps
+from typing import Any, Callable, Dict, List, Optional, TypeVar
 
 from pydantic import ValidationError, parse_obj_as
 
@@ -49,7 +49,7 @@ def cache_batch_variable(
         def batch_function_wrapper(*args, **kwargs):
             args = list(args)
             in_args = False
-            
+
             # check if batch_variable is in args or kwargs
             batch_variable = kwargs.get(batch_variable_name)
             if batch_variable is not None:
@@ -60,7 +60,7 @@ def cache_batch_variable(
                 for arg_index, arg in enumerate(args):
                     try:
                         # check if batch_variable meets the annotation provided
-                        # NOTE: this will fail if more than one argument 
+                        # NOTE: this will fail if more than one argument
                         # meets the annotation before batch_variable
                         batch_variable = parse_obj_as(
                             func.__annotations__.get(batch_variable_name), arg
@@ -69,8 +69,9 @@ def cache_batch_variable(
                         break
                     except ValidationError:
                         continue
-            assert batch_variable is not None, f"{batch_variable_name} must be a valid argument of the batch function"
-                
+            assert (
+                batch_variable is not None
+            ), f"{batch_variable_name} must be a valid argument of the batch function"
 
             # new_batch will contain only the items that are not in cache
             new_batch, new_indices = [], []
