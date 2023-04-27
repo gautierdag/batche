@@ -1,4 +1,6 @@
-[![Python Package Test](https://github.com/gautierdag/batche/actions/workflows/publish.yml/badge.svg)](https://github.com/gautierdag/batche/actions/workflows/publish.yml)
+
+
+[![tests](https://github.com/gautierdag/batche/actions/workflows/test.yml/badge.svg)](https://github.com/gautierdag/batche/actions/workflows/test.yml)
 
 # batche
 Batch cache decorator
