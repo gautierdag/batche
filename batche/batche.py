@@ -1,13 +1,13 @@
 import inspect
 from functools import wraps
-from typing import Callable, List, Optional, TypeVar, Any
+from typing import Callable, List, Optional, TypeVar, Any, Dict
 from collections import OrderedDict
 
 from pydantic import ValidationError, parse_obj_as
 
 R = TypeVar("R")
 
-batche_cache: OrderedDict[Any, List[R]] = OrderedDict()
+batche_cache: Dict[Any, List[R]] = OrderedDict()
 
 
 def is_list_annotation(annotation: Any):
