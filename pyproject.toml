@@ -4,6 +4,12 @@ version = "0.1.0"
 description = "batch caching decorator"
 authors = ["Gautier Dagan <gautier.dagan@ed.ac.uk>"]
 license = "MIT"
+readme = "README.md"
+homepage = "https://github.com/gautierdag/batche"
+repository = "https://github.com/gautierdag/batche"
+include = [
+    "LICENSE",
+]
 
 [tool.poetry.dependencies]
 python = "^3.8"
