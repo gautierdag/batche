@@ -6,7 +6,7 @@ authors = ["Gautier Dagan <gautier.dagan@ed.ac.uk>"]
 license = "MIT"
 
 [tool.poetry.dependencies]
-python = "^3.10"
+python = "^3.8"
 pydantic = "^1.10.7"
 
 [tool.poetry.dev-dependencies]
