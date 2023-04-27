@@ -49,31 +49,36 @@ def cache_batch_variable(
         def batch_function_wrapper(*args, **kwargs):
             args = list(args)
             in_args = False
-            for arg_index, arg in enumerate(args):
-                try:
-                    batch = parse_obj_as(
-                        func.__annotations__.get(batch_variable_name), arg
-                    )
-                    in_args = True
-                    break
-                except ValidationError:
-                    continue
-            else:
-                batch = kwargs.get(batch_variable_name)
-                assert (
-                    batch is not None
-                ), f"{batch_variable_name} must be a valid argument of the batch function"
-                batch = parse_obj_as(
-                    func.__annotations__.get(batch_variable_name), batch
+            
+            # check if batch_variable is in args or kwargs
+            batch_variable = kwargs.get(batch_variable_name)
+            if batch_variable is not None:
+                batch_variable = parse_obj_as(
+                    func.__annotations__.get(batch_variable_name), batch_variable
                 )
+            else:
+                for arg_index, arg in enumerate(args):
+                    try:
+                        # check if batch_variable meets the annotation provided
+                        # NOTE: this will fail if more than one argument 
+                        # meets the annotation before batch_variable
+                        batch_variable = parse_obj_as(
+                            func.__annotations__.get(batch_variable_name), arg
+                        )
+                        in_args = True
+                        break
+                    except ValidationError:
+                        continue
+            assert batch_variable is not None, f"{batch_variable_name} must be a valid argument of the batch function"
+                
 
             # new_batch will contain only the items that are not in cache
             new_batch, new_indices = [], []
 
             # initialize predictions with empty lists
-            predictions = [[] for _ in range(len(batch))]
+            predictions = [[] for _ in range(len(batch_variable))]
 
-            for i, batch_item in enumerate(batch):
+            for i, batch_item in enumerate(batch_variable):
                 if batch_item in batche_cache:
                     predictions[i] = batche_cache[batch_item]
                 else:
@@ -97,7 +102,7 @@ def cache_batch_variable(
 
             for i, prediction in zip(new_indices, out):
                 predictions[i] = prediction
-                batche_cache[batch[i]] = prediction
+                batche_cache[batch_variable[i]] = prediction
 
             return predictions
 
