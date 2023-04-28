@@ -7,43 +7,56 @@ from pydantic import ValidationError, parse_obj_as
 
 R = TypeVar("R")
 
-batche_cache: Dict[Any, List[R]] = OrderedDict()
-
+class BatcheException(Exception):
+    pass
 
 def is_list_annotation(annotation: Any):
-    if annotation is list or (
+    """
+    Check if annotation is a list or a generic list
+    """
+    return (annotation is list or (
         hasattr(annotation, "__origin__") and issubclass(list, annotation.__origin__)
-    ):
-        return True
-    return False
+    ))
+
+
+def validate_function_annotations(func: Callable[..., List[Any]], batch_variable_name: Optional[str] = None)->None:
+    """
+    Validate that the batch function has the correct annotations on the batch variable and return value
+    Batch variable must be a list of hashable objects
+    Return value must be a list of Any type
+
+    If annotations are not provided then ignores validation
+    """
+    # validate batch_func
+    function_function_argspec = inspect.getfullargspec(func)
+    if batch_variable_name is not None:
+        # TODO: don't require annotations if batch_variable_name is provided in kwargs
+        if batch_variable_name not in function_function_argspec.args:
+            raise BatcheException(f"{batch_variable_name} must be a valid argument of the batch function")
+
+        batch_arg_annotations = function_function_argspec.annotations.get(
+            batch_variable_name
+        )
+        if batch_arg_annotations and not is_list_annotation(batch_arg_annotations):
+            raise BatcheException(f"{batch_variable_name} annotation must be a list of hashable objects")
+
+    # validate return annotation must be list
+    return_annotation = function_function_argspec.annotations.get("return")
+    if return_annotation and not is_list_annotation(return_annotation):
+        raise BatcheException("return annotation must be a list")
 
 
 def cache_batch_variable(
     batch_variable_name: Optional[str] = None, max_size: Optional[int] = None
 ):
+    # @TODO: implement max_size
+    batche_cache: Dict[Any, List[R]] = OrderedDict()
+
     def internal_cache_batch_decorator(
         func: Callable[..., List[R]]
     ) -> Callable[..., List[R]]:
-        # validate batch_func
-        function_function_argspec = inspect.getfullargspec(func)
-        if batch_variable_name is not None:
-            assert (
-                batch_variable_name in function_function_argspec.args
-            ), f"{batch_variable_name} must be a valid argument of the batch function"
-
-            batch_arg_annotations = function_function_argspec.annotations.get(
-                batch_variable_name
-            )
-            if batch_arg_annotations:
-                assert is_list_annotation(
-                    batch_arg_annotations
-                ), f"{batch_variable_name} annotation must be a list of hashable objects"
-
-        return_annotation = function_function_argspec.annotations.get("return")
-        if return_annotation:
-            assert is_list_annotation(
-                return_annotation
-            ), "return annotation must be a list"
+        
+        validate_function_annotations(func, batch_variable_name=batch_variable_name)
 
         @wraps(func)
         def batch_function_wrapper(*args, **kwargs):
@@ -69,9 +82,9 @@ def cache_batch_variable(
                         break
                     except ValidationError:
                         continue
-            assert (
-                batch_variable is not None
-            ), f"{batch_variable_name} must be a valid argument of the batch function"
+            if batch_variable is None:
+                # TODO: Test
+                raise BatcheException(f"{batch_variable_name} must be a valid argument of the batch function")
 
             # new_batch will contain only the items that are not in cache
             new_batch, new_indices = [], []
@@ -97,10 +110,13 @@ def cache_batch_variable(
 
             # call the function with the new batch
             out = func(*args, **kwargs)
-            assert len(out) == len(
-                new_batch
-            ), "batch function must return a list of predictions of the same length as the batch"
 
+            # validate that the function returns a list of the same length as the new batch
+            # TODO: Test
+            if len(out) != len(new_batch):
+                raise BatcheException("batch function must return a list of predictions of the same length as the batch")
+
+            # update the cache and outputs
             for i, prediction in zip(new_indices, out):
                 predictions[i] = prediction
                 batche_cache[batch_variable[i]] = prediction

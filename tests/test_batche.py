@@ -3,7 +3,8 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from batche import batche_cache, cache_batch_variable
+from batche import cache_batch_variable
+from batche.batche import BatcheException
 
 
 def test_cache_decorator_success():
@@ -17,7 +18,7 @@ def test_cache_decorator_success():
 
 def test_cache_decorator_with_invalid_argument():
     with pytest.raises(
-        AssertionError,
+        BatcheException,
         match="invalid_arg must be a valid argument of the batch function",
     ):
 
@@ -30,7 +31,7 @@ def test_cache_decorator_with_invalid_argument():
 
 def test_cache_decorator_with_invalid_annotation():
     with pytest.raises(
-        AssertionError, match="values annotation must be a list of hashable objects"
+        BatcheException, match="values annotation must be a list of hashable objects"
     ):
 
         @cache_batch_variable("values")
@@ -41,7 +42,7 @@ def test_cache_decorator_with_invalid_annotation():
 
 
 def test_cache_decorator_with_invalid_return_annotation():
-    with pytest.raises(AssertionError, match="return annotation must be a list"):
+    with pytest.raises(BatcheException, match="return annotation must be a list"):
 
         @cache_batch_variable("values")
         def sum_values(values: List[int]) -> int:
@@ -52,7 +53,7 @@ def test_cache_decorator_with_invalid_return_annotation():
 
 def test_cache_decorator_with_missing_batch_variable():
     with pytest.raises(
-        AssertionError, match="values must be a valid argument of the batch function"
+        BatcheException, match="values must be a valid argument of the batch function"
     ):
 
         @cache_batch_variable("values")
@@ -62,29 +63,7 @@ def test_cache_decorator_with_missing_batch_variable():
         sum_values([[1, 2, 3], [4, 5, 6], [7, 8, 9]])
 
 
-def test_cache_decorator_reuse_cache():
-    @cache_batch_variable("values")
-    def sum_values(values: List[Tuple[int, int, int]]) -> List[int]:
-        return [sum(value) for value in values]
-
-    # First call to populate the cache
-    result1 = sum_values([[1, 2, 3], [4, 5, 6], [7, 8, 9]])
-    assert result1 == [6, 15, 24]
-    assert (1, 2, 3) in batche_cache
-    assert (4, 5, 6) in batche_cache
-    assert (7, 8, 9) in batche_cache
-    assert (10, 11, 12) not in batche_cache
-
-    # Second call with overlapping inputs, should use cache
-    result2 = sum_values([[1, 2, 3], [10, 11, 12]])
-    assert result2 == [6, 33]
-    assert (10, 11, 12) in batche_cache
-
-
-def test_cache_decorator_avoid_unnecessary_calls():
-    # Clear the cache
-    batche_cache.clear()
-
+def test_cache_decorator_separate_caches():
     sum_values_mock = MagicMock(
         side_effect=lambda values: [sum(value) for value in values]
     )
@@ -92,7 +71,29 @@ def test_cache_decorator_avoid_unnecessary_calls():
     @cache_batch_variable("values")
     def sum_values_wrapped(values: List[Tuple[int, int, int]]) -> List[int]:
         return sum_values_mock(values)
+    
+    @cache_batch_variable("values")
+    def sum_values_wrapped_alt(values: List[Tuple[int, int, int]]) -> List[int]:
+        return sum_values_mock(values)
 
+    # First call to populate the cache
+    sum_values_wrapped([[1, 2, 3], [4, 5, 6], [7, 8, 9]])
+    assert sum_values_mock.call_count == 1
+
+    # Second call with overlapping inputs, should not use cache since it's a different function
+    sum_values_wrapped_alt([[1, 2, 3], [4, 5, 6], [7, 8, 9]])
+    assert sum_values_mock.call_count == 2
+
+
+def test_cache_decorator_avoid_unnecessary_calls():
+    sum_values_mock = MagicMock(
+        side_effect=lambda values: [sum(value) for value in values]
+    )
+
+    @cache_batch_variable("values")
+    def sum_values_wrapped(values: List[Tuple[int, int, int]]) -> List[int]:
+        return sum_values_mock(values)
+    
     # First call to populate the cache
     sum_values_wrapped([[1, 2, 3], [4, 5, 6], [7, 8, 9]])
     assert sum_values_mock.call_count == 1
