@@ -179,23 +179,19 @@ def test_missing_batch_variable():
         sum_values(fake=[(1, 2, 3), (4, 5, 6), (7, 8, 9)])
 
 
-def test_no_annotations_kwargs_usage():
+def test_no_annotations_usage():
     @cache_batch_variable("values")
     def sum_values_wrapped_alt(values):
         return [sum(value) for value in values]
 
-    result = sum_values_wrapped_alt(values=[(1, 2, 3), (4, 5, 6), (7, 8, 9)])
+    result = sum_values_wrapped_alt([(1, 2, 3), (4, 5, 6), (7, 8, 9)])
     assert result == [6, 15, 24]
 
 
-# def test_no_annotations_kwargs_usage():
+def test_no_annotations_kwargs_usage():
+    @cache_batch_variable("values")
+    def sum_values_wrapped_alt(**kwargs):
+        return [sum(value) for value in kwargs["values"]]
 
-#     with pytest.raises(
-#         BatcheException, match="values must be a valid argument of the batch function"
-#     ):
-#         @cache_batch_variable("values")
-#         def sum_values_wrapped_alt(values):
-#             return [sum(value) for value in values]
-
-#     result = sum_values_wrapped_alt([(1, 2, 3), (4, 5, 6), (7, 8, 9)])
-#     assert result == [6, 15, 24]
+    result = sum_values_wrapped_alt(values=[(1, 2, 3), (4, 5, 6), (7, 8, 9)])
+    assert result == [6, 15, 24]

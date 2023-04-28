@@ -1,4 +1,4 @@
-# LRUCache taken from cachetools
+# LRUCache implementation taken from cachetools
 # https://github.com/tkem/cachetools/blob/master/src/cachetools/
 
 import collections

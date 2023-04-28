@@ -21,7 +21,7 @@ def is_list_annotation(annotation: Any):
 
 
 def validate_function_annotations(
-    func: Callable[..., List[Any]], batch_variable_name: Optional[str] = None
+    func: Callable[..., List[Any]], batch_variable_name: str
 ) -> int:
     """
     Validate that the batch function has the correct annotations on the batch variable and return value
@@ -31,18 +31,21 @@ def validate_function_annotations(
     If annotations are not provided then ignores validation
     """
     # validate batch_func
-    function_function_argspec = inspect.getfullargspec(func)
+    function_argspec = inspect.getfullargspec(func)
     index = -1
-    if batch_variable_name is not None:
-        if batch_variable_name not in function_function_argspec.args:
-            raise BatcheException(
-                f"{batch_variable_name} must be a valid argument of the batch function"
-            )
-        # get index of batch_variable argument
-        index = function_function_argspec.args.index(batch_variable_name)
+    
+    # validate batch_variable_name is a valid argument
+    if batch_variable_name not in function_argspec.args and function_argspec.varkw is None:
+        raise BatcheException(
+            f"{batch_variable_name} must be a valid argument of the batch function"
+        )
+    
+    # get index of batch_variable argument
+    if batch_variable_name in function_argspec.args:
+        index = function_argspec.args.index(batch_variable_name)
 
     # validate batch_arg annotation must be list
-    batch_arg_annotations = function_function_argspec.annotations.get(
+    batch_arg_annotations = function_argspec.annotations.get(
         batch_variable_name
     )
     if batch_arg_annotations and not is_list_annotation(batch_arg_annotations):
@@ -51,7 +54,7 @@ def validate_function_annotations(
         )
 
     # validate return annotation must be list
-    return_annotation = function_function_argspec.annotations.get("return")
+    return_annotation = function_argspec.annotations.get("return")
     if return_annotation and not is_list_annotation(return_annotation):
         raise BatcheException("return annotation must be a list")
 
@@ -59,7 +62,7 @@ def validate_function_annotations(
 
 
 def cache_batch_variable(
-    batch_variable_name: Optional[str] = None, maxsize: Optional[int] = None
+    batch_variable_name: str, maxsize: Optional[int] = None
 ):
     batche_cache: Dict[Any, List[R]] = {}
     if maxsize is not None:
