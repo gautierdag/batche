@@ -16,7 +16,7 @@ pip install batche
 
 To use this decorator, simply import it and apply it to a function that takes a batch of items (list) as input and returns a list of predictions. The decorator will cache the results of the function for previously processed items.
 
-```python:
+```python
 from batche import cache_batch_variable
 
 # batch_variable_name (str): The name of the argument in your batch function that holds the input batch list. This is a required parameter.
