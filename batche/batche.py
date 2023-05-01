@@ -33,21 +33,22 @@ def validate_function_annotations(
     # validate batch_func
     function_argspec = inspect.getfullargspec(func)
     index = -1
-    
+
     # validate batch_variable_name is a valid argument
-    if batch_variable_name not in function_argspec.args and function_argspec.varkw is None:
+    if (
+        batch_variable_name not in function_argspec.args
+        and function_argspec.varkw is None
+    ):
         raise BatcheException(
             f"{batch_variable_name} must be a valid argument of the batch function"
         )
-    
+
     # get index of batch_variable argument
     if batch_variable_name in function_argspec.args:
         index = function_argspec.args.index(batch_variable_name)
 
     # validate batch_arg annotation must be list
-    batch_arg_annotations = function_argspec.annotations.get(
-        batch_variable_name
-    )
+    batch_arg_annotations = function_argspec.annotations.get(batch_variable_name)
     if batch_arg_annotations and not is_list_annotation(batch_arg_annotations):
         raise BatcheException(
             f"{batch_variable_name} annotation must be a list of hashable objects"
@@ -61,9 +62,7 @@ def validate_function_annotations(
     return index
 
 
-def cache_batch_variable(
-    batch_variable_name: str, maxsize: Optional[int] = None
-):
+def cache_batch_variable(batch_variable_name: str, maxsize: Optional[int] = None):
     batche_cache: Dict[Any, List[R]] = {}
     if maxsize is not None:
         batche_cache = LRUCache(maxsize=maxsize)

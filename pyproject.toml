@@ -29,4 +29,6 @@ build-backend = "poetry.core.masonry.api"
 profile = "black"
 
 [tool.ruff]
+line-length = 88
+select = ["F", "E", "W", "I001"]
 ignore = ["F722", "E501"]
