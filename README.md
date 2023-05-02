@@ -5,7 +5,7 @@
 [![image](https://img.shields.io/pypi/l/batche.svg)](https://pypi.python.org/pypi/batche)
 [![image](https://img.shields.io/pypi/pyversions/batche.svg)](https://pypi.python.org/pypi/batche)
 
-# batche
+# batche (batch + cache)
 
 `batche` provides a Python decorator that caches the results of a batch function. It helps in reducing computation by caching the outputs for previously processed input batches. The cache is maintained using a dictionary or an LRU (Least Recently Used) Cache, based on the maxsize parameter.
 
