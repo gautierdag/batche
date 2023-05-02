@@ -1,6 +1,9 @@
 
 
 [![tests](https://github.com/gautierdag/batche/actions/workflows/test.yml/badge.svg)](https://github.com/gautierdag/batche/actions/workflows/test.yml)
+[![image](https://img.shields.io/pypi/v/batche.svg)](https://pypi.python.org/pypi/batche)
+[![image](https://img.shields.io/pypi/l/batche.svg)](https://pypi.python.org/pypi/batche)
+[![image](https://img.shields.io/pypi/pyversions/batche.svg)](https://pypi.python.org/pypi/batche)
 
 # batche
 
