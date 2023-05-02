@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "batche"
-version = "0.1.0"
+version = "0.1.1"
 description = "batch caching decorator"
 authors = ["Gautier Dagan <gautier.dagan@ed.ac.uk>"]
 license = "MIT"
