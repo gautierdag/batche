@@ -9,6 +9,9 @@
 
 `batche` provides a Python decorator analogous to `lru_cache` but for functions that transform list objects.
 
+Where `lru_cache` caches the results of a function call for a given set of arguments naively - for instance treating the batch inputs (1, 2, 3) and (1, 3, 2) as entirely different.
+`batche` introduces `cache_batch_variable` to cache on a per-item basis for a given batch variable.
+
 It helps in reducing computation by caching the outputs of each previously processed input in the batch. The cache is maintained using a dictionary or an LRU (Least Recently Used) Cache, based on the maxsize parameter. If maxsize is not provided, the cache will be a simple dictionary.
 
 This is useful when you have a costly function that takes a batch of items as input and returns a list of predictions. If you call this function multiple times with overlapping batches, the results for the overlapping examples will be fetched from the cache, improving the performance.
@@ -26,7 +29,7 @@ You might be calling an external API or machine learning model that takes a batc
 However, if you are calling the function with inputs that overlap, you might be wasting computation by calling the function multiple times with the same input examples.
 
 
-### OPENAI API EXAMPLE
+### OpenAI API example
 
 ```python
 import openai
@@ -36,7 +39,7 @@ from batche import cache_batch_variable
 def get_openai_embeddings(batch_items: List[str]) -> List[float]:
     # Costly computation
     response = openai.Embedding.create(
-        input="Your text string goes here",
+        input=batch_items,
         model="text-embedding-ada-002"
     )
     return [d["embedding"] for d in response['data']]
