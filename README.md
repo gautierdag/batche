@@ -7,13 +7,51 @@
 
 # batche (batch + cache)
 
-`batche` provides a Python decorator that caches the results of a batch function. It helps in reducing computation by caching the outputs for previously processed input batches. The cache is maintained using a dictionary or an LRU (Least Recently Used) Cache, based on the maxsize parameter.
+`batche` provides a Python decorator analogous to `lru_cache` but for functions that transform list objects.
+
+It helps in reducing computation by caching the outputs of each previously processed input in the batch. The cache is maintained using a dictionary or an LRU (Least Recently Used) Cache, based on the maxsize parameter. If maxsize is not provided, the cache will be a simple dictionary.
+
+This is useful when you have a costly function that takes a batch of items as input and returns a list of predictions. If you call this function multiple times with overlapping batches, the results for the overlapping examples will be fetched from the cache, improving the performance.
 
 ## Installation
 
 ```bash
 pip install batche
 ```
+
+## Why?
+
+You might be calling an external API or machine learning model that takes a batch of items as input and returns a list of predictions.
+
+However, if you are calling the function with inputs that overlap, you might be wasting computation by calling the function multiple times with the same input examples.
+
+
+### OPENAI API EXAMPLE
+
+```python
+import openai
+from batche import cache_batch_variable
+
+@cache_batch_variable(batch_variable_name="batch_items", maxsize=100)
+def get_openai_embeddings(batch_items: List[str]) -> List[float]:
+    # Costly computation
+    response = openai.Embedding.create(
+        input="Your text string goes here",
+        model="text-embedding-ada-002"
+    )
+    return [d["embedding"] for d in response['data']]
+
+# api will be called with batch of 2 items and the results will be cached
+embeddings_1 = get_openai_embeddings(["hello", "world"])
+
+# api will be called with batch of 1 items ("again"), the results for "hello" will be fetched from the cache
+embeddings_2 = get_openai_embeddings(["hello", "again"])
+
+# api will not be called, the embeddigns will be fetched from the cache
+embeddings_2 = get_openai_embeddings(["hello", "again"])
+
+```
+
 
 ## Usage
 
@@ -32,12 +70,11 @@ def batch_function(batch_items: List[HashableType]) -> List[Any]:
 ```
 
 
-## Example
+### Example
 
 Here is a complete example using the cache_batch_variable decorator:
 
 ```python
-
 from cache_batch_decorator import cache_batch_variable
 
 @cache_batch_variable(batch_variable_name="batch_items", maxsize=100)
@@ -60,13 +97,12 @@ input_batch = ["hello", "again",]
 output_batch = batch_function(input_batch)
 print(output_batch)
 > ['HELLO', 'AGAIN']
-
 ```
 
 When calling the function with the same input batch again, the results will be fetched from the cache, improving the performance.
 Cache Types
 
-By default, the cache size is unlimited (uses a dictionary). If you want to limit the cache size, you can use the `maxsize` parameter. This will create an LRU Cache with the specified size:
+By default, the cache size is unlimited (uses a dictionary). If you want to limit the cache size, you can use the `maxsize` parameter, this will create an LRU Cache with the specified size.
 
 
 # Important Notes
