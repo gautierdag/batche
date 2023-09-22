@@ -50,7 +50,7 @@ embeddings_1 = get_openai_embeddings(["hello", "world"])
 # api will be called with batch of 1 items ("again"), the results for "hello" will be fetched from the cache
 embeddings_2 = get_openai_embeddings(["hello", "again"])
 
-# api will not be called, the embeddigns will be fetched from the cache
+# api will not be called, the embeddings will be fetched from the cache
 embeddings_2 = get_openai_embeddings(["hello", "again"])
 
 ```
